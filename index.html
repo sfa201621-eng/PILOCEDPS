@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Система контролю та штрафів</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#0b1220;
+    color:#fff;
+}
+header{
+    background:#111c30;
+    padding:18px 22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid #26344d;
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+.logo{
+    font-size:21px;
+    font-weight:bold;
+}
+.clock{
+    color:#aebbd0;
+    font-size:14px;
+}
+.layout{
+    display:flex;
+    min-height:calc(100vh - 70px);
+}
+.sidebar{
+    width:230px;
+    background:#0e1829;
+    border-right:1px solid #26344d;
+    padding:15px;
+}
+.nav{
+    width:100%;
+    padding:13px;
+    margin-bottom:7px;
+    background:transparent;
+    color:#dce6f5;
+    border:0;
+    border-radius:10px;
+    text-align:left;
+    font-size:15px;
+    cursor:pointer;
+}
+.nav:hover,.nav.active{
+    background:#1c2b44;
+}
+.main{
+    flex:1;
+    padding:22px;
+    max-width:1400px;
+}
+.page{display:none}
+.page.active{display:block}
+h1{margin-top:0}
+.subtitle{
+    color:#91a1b8;
+    margin-top:-10px;
+}
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+    margin:20px 0;
+}
+.card{
+    background:#151f31;
+    border:1px solid #273650;
+    border-radius:14px;
+    padding:20px;
+}
+.card .number{
+    font-size:30px;
+    font-weight:bold;
+    margin-top:8px;
+}
+.card small{color:#91a1b8}
+.panel{
+    background:#151f31;
+    border:1px solid #273650;
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:18px;
+}
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+}
+label{
+    display:block;
+    color:#aebbd0;
+    font-size:13px;
+    margin-bottom:6px;
+}
+input,select,textarea{
+    width:100%;
+    padding:12px;
+    background:#0c1525;
+    border:1px solid #33445f;
+    border-radius:9px;
+    color:white;
+    outline:none;
+}
+textarea{min-height:90px;resize:vertical}
+button{
+    border:0;
+    border-radius:9px;
+    padding:11px 15px;
+    cursor:pointer;
+    font-weight:bold;
+}
+.primary{background:#2d7cff;color:white}
+.success{background:#159957;color:white}
+.danger{background:#d64545;color:white}
+.gray{background:#33445f;color:white}
+.actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:15px;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+th,td{
+    padding:12px 8px;
+    border-bottom:1px solid #293750;
+    text-align:left;
+}
+th{color:#9eacc0;font-size:13px}
+.badge{
+    display:inline-block;
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:12px;
+}
+.paid{background:#123f2d;color:#66e0a3}
+.unpaid{background:#4b2d12;color:#ffc36a}
+.code{
+    background:#0d1728;
+    border:1px solid #293950;
+    border-radius:10px;
+    padding:15px;
+    margin-top:10px;
+}
+.article{
+    border:1px solid #293950;
+    background:#101b2c;
+    border-radius:12px;
+    padding:17px;
+    margin-bottom:10px;
+}
+.article h3{margin-top:0}
+.amount{
+    font-size:22px;
+    font-weight:bold;
+}
+.notice{
+    background:#302817;
+    border:1px solid #68562d;
+    color:#f5d98c;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:15px;
+}
+.empty{
+    text-align:center;
+    padding:30px;
+    color:#8190a6;
+}
+@media(max-width:900px){
+    .sidebar{width:70px;padding:8px}
+    .nav span{display:none}
+    .nav{text-align:center}
+    .cards{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+    header{padding:14px}
+    .main{padding:14px}
+    .grid{grid-template-columns:1fr}
+    .cards{grid-template-columns:1fr 1fr}
+    th:nth-child(3),td:nth-child(3){display:none}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">🚔 Система контролю та штрафів</div>
+    <div class="clock" id="clock"></div>
+</header>
+
+<div class="layout">
+
+<aside class="sidebar">
+    <button class="nav active" onclick="openPage('home',this)">🏠 <span>Головна</span></button>
+    <button class="nav" onclick="openPage('fine',this)">🧾 <span>Штраф</span></button>
+    <button class="nav" onclick="openPage('payments',this)">💳 <span>Оплата</span></button>
+    <button class="nav" onclick="openPage('protocols',this)">📋 <span>Протоколи</span></button>
+    <button class="nav" onclick="openPage('code',this)">📖 <span>Кодекс</span></button>
+    <button class="nav" onclick="openPage('transport',this)">🚗 <span>Транспорт</span></button>
+    <button class="nav" onclick="openPage('stats',this)">📊 <span>Статистика</span></button>
+</aside>
+
+<main class="main">
+
+<!-- ГОЛОВНА -->
+<section id="home" class="page active">
+    <h1>Головна</h1>
+    <p class="subtitle">Центр обліку порушень, штрафів та протоколів</p>
+
+    <div class="cards">
+        <div class="card">
+            <small>Усього штрафів</small>
+            <div class="number" id="totalFines">0</div>
+        </div>
+        <div class="card">
+            <small>Сплачено</small>
+            <div class="number" id="paidFines">0</div>
+        </div>
+        <div class="card">
+            <small>Очікують оплати</small>
+            <div class="number" id="unpaidFines">0</div>
+        </div>
+        <div class="card">
+            <small>Сума штрафів</small>
+            <div class="number" id="totalMoney">0 ₴</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Швидкі дії</h2>
+        <div class="actions">
+            <button class="primary" onclick="openPage('fine')">+ Оформити штраф</button>
+            <button class="gray" onclick="openPage('protocols')">📋 Новий протокол</button>
+            <button class="gray" onclick="openPage('code')">📖 Відкрити кодекс</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Останні штрафи</h2>
+        <div id="recentHome"></div>
+    </div>
+</section>
+
+<!-- ШТРАФ -->
+<section id="fine" class="page">
+    <h1>Оформлення штрафу</h1>
+    <p class="subtitle">Створення нового запису</p>
+
+    <div class="panel">
+        <div class="grid">
+
+            <div>
+                <label>ПІБ особи</label>
+                <input id="finePerson" placeholder="Наприклад: Іваненко Іван">
+            </div>
+
+            <div>
+                <label>Номер транспортного засобу</label>
+                <input id="fineCar" placeholder="AA 0000 AA">
+            </div>
+
+            <div>
+                <label>Стаття</label>
+                <select id="fineArticle" onchange="setFineAmount()">
+                    <option value="1">Стаття 1 — Перевищення швидкості</option>
+                    <option value="2">Стаття 2 — Порушення правил паркування</option>
+                    <option value="3">Стаття 3 — Проїзд на заборонний сигнал</option>
+                    <option value="4">Стаття 4 — Непред'явлення документів</option>
+                    <option value="5">Стаття 5 — Порушення правил маневрування</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Сума штрафу</label>
+                <input id="fineAmount" type="number" value="340">
+            </div>
+
+            <div>
+                <label>Дата</label>
+                <input id="fineDate" type="date">
+            </div>
+
+            <div>
+                <label>Час</label>
+                <input id="fineTime" type="time">
+            </div>
+
+        </div>
+
+        <br>
+
+        <label>Додаткова інформація</label>
+        <textarea id="fineComment" placeholder="Опис обставин порушення..."></textarea>
+
+        <div class="actions">
+            <button class="primary" onclick="createFine()">Створити штраф</button>
+            <button class="gray" onclick="clearFine()">Очистити</button>
+        </div>
+    </div>
+</section>
+
+<!-- ОПЛАТА -->
+<section id="payments" class="page">
+    <h1>Оплата штрафів</h1>
+    <p class="subtitle">Пошук та керування оплатами</p>
+
+    <div class="panel">
+        <input id="paymentSearch" placeholder="Пошук за ПІБ, номером або ID..." oninput="renderPayments()">
+    </div>
+
+    <div class="panel">
+        <div id="paymentsTable"></div>
+    </div>
+</section>
+
+<!-- ПРОТОКОЛИ -->
+<section id="protocols" class="page">
+    <h1>Протоколи</h1>
+
+    <div class="panel">
+        <div class="grid">
+            <div>
+                <label>Номер протоколу</label>
+                <input id="protocolNumber" placeholder="ПР-0001">
+            </div>
+            <div>
+                <label>ПІБ</label>
+                <input id="protocolPerson" placeholder="ПІБ особи">
+            </div>
+            <div>
+                <label>Номер автомобіля</label>
+                <input id="protocolCar" placeholder="AA 0000 AA">
+            </div>
+            <div>
+                <label>Стаття</label>
+                <input id="protocolArticle" placeholder="Стаття 1">
+            </div>
+        </div>
+
+        <br>
+
+        <label>Опис</label>
+        <textarea id="protocolDescription"></textarea>
+
+        <div class="actions">
+            <button class="primary" onclick="createProtocol()">Створити протокол</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Створені протоколи</h2>
+        <div id="protocolsList"></div>
+    </div>
+</section>
+
+<!-- КОДЕКС -->
+<section id="code" class="page">
+    <h1>Кодекс</h1>
+
+    <div class="notice">
+        ⚠️ Наведені нижче статті є умовним довідником для цієї системи.
+        Для реальних юридичних рішень необхідно користуватися чинним законодавством.
+    </div>
+
+    <div class="panel">
+        <input id="articleSearch" placeholder="Пошук статті..." oninput="renderArticles()">
+    </div>
+
+    <div id="articles"></div>
+</section>
+
+<!-- ТРАНСПОРТ -->
+<section id="transport" class="page">
+    <h1>Транспорт</h1>
+
+    <div class="panel">
+        <div class="grid">
+            <div>
+                <label>Номер</label>
+                <input id="carNumber" placeholder="AA 0000 AA">
+            </div>
+            <div>
+                <label>Марка та модель</label>
+                <input id="carModel" placeholder="Toyota Camry">
+            </div>
+            <div>
+                <label>Колір</label>
+                <input id="carColor" placeholder="Чорний">
+            </div>
+            <div>
+                <label>Власник</label>
+                <input id="carOwner" placeholder="ПІБ">
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="primary" onclick="addCar()">Додати транспорт</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div id="carsList"></div>
+    </div>
+</section>
+
+<!-- СТАТИСТИКА -->
+<section id="stats" class="page">
+    <h1>Статистика</h1>
+
+    <div class="cards">
+        <div class="card">
+            <small>Штрафів</small>
+            <div class="number" id="statFines">0</div>
+        </div>
+        <div class="card">
+            <small>Сплачено</small>
+            <div class="number" id="statPaid">0</div>
+        </div>
+        <div class="card">
+            <small>Не сплачено</small>
+            <div class="number" id="statUnpaid">0</div>
+        </div>
+        <div class="card">
+            <small>Загальна сума</small>
+            <div class="number" id="statMoney">0 ₴</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Дані зберігаються локально</h2>
+        <p style="color:#91a1b8">
+            Записи зберігаються у браузері на цьому пристрої через localStorage.
+        </p>
+        <button class="danger" onclick="clearAll()">Очистити всю базу</button>
+    </div>
+</section>
+
+</main>
+</div>
+
+<script>
+
+let fines = JSON.parse(localStorage.getItem("fines") || "[]");
+let protocols = JSON.parse(localStorage.getItem("protocols") || "[]");
+let cars = JSON.parse(localStorage.getItem("cars") || "[]");
+
+const articles = [
+    {
+        id:1,
+        title:"Перевищення встановленої швидкості",
+        description:"Порушення встановленого обмеження швидкості.",
+        amount:340
+    },
+    {
+        id:2,
+        title:"Порушення правил паркування",
+        description:"Зупинка або стоянка з порушенням визначених правил.",
+        amount:340
+    },
+    {
+        id:3,
+        title:"Проїзд на заборонний сигнал",
+        description:"Проїзд перехрестя або іншої ділянки на заборонний сигнал.",
+        amount:510
+    },
+    {
+        id:4,
+        title:"Непред'явлення документів",
+        description:"Відсутність необхідних документів під час перевірки.",
+        amount:425
+    },
+    {
+        id:5,
+        title:"Порушення правил маневрування",
+        description:"Порушення встановленого порядку виконання маневру.",
+        amount:510
+    }
+];
+
+function save(){
+    localStorage.setItem("fines",JSON.stringify(fines));
+    localStorage.setItem("protocols",JSON.stringify(protocols));
+    localStorage.setItem("cars",JSON.stringify(cars));
+}
+
+function openPage(id,btn){
+
+    document.querySelectorAll(".page").forEach(p=>{
+        p.classList.remove("active");
+    });
+
+    document.getElementById(id).classList.add("active");
+
+    document.querySelectorAll(".nav").forEach(n=>{
+        n.classList.remove("active");
+    });
+
+    if(btn) btn.classList.add("active");
+
+    updateAll();
+}
+
+function setFineAmount(){
+    let id=Number(document.getElementById("fineArticle").value);
+    let a=articles.find(x=>x.id===id);
+
+    if(a){
+        document.getElementById("fineAmount").value=a.amount;
+    }
+}
+
+function createFine(){
+
+    let person=document.getElementById("finePerson").value.trim();
+    let car=document.getElementById("fineCar").value.trim();
+    let articleId=Number(document.getElementById("fineArticle").value);
+    let amount=Number(document.getElementById("fineAmount").value);
+    let date=document.getElementById("fineDate").value;
+    let time=document.getElementById("fineTime").value;
+    let comment=document.getElementById("fineComment").value.trim();
+
+    if(!person || !car || !amount){
+        alert("Заповніть ПІБ, номер автомобіля та суму.");
+        return;
+    }
+
+    let article=articles.find(x=>x.id===articleId);
+
+    let fine={
+        id:"F-"+Date.now().toString().slice(-6),
+        person,
+        car,
+        article:"Стаття "+article.id,
+        articleTitle:article.title,
+        amount,
+        date:date || new Date().toISOString().slice(0,10),
+        time:time || new Date().toLocaleTimeString("uk-UA",{hour:"2-digit",minute:"2-digit"}),
+        comment,
+        paid:false
+    };
+
+    fines.unshift(fine);
+    save();
+
+    alert("Штраф створено. ID: "+fine.id);
+
+    clearFine();
+    updateAll();
+}
+
+function clearFine(){
+    document.getElementById("finePerson").value="";
+    document.getElementById("fineCar").value="";
+    document.getElementById("fineAmount").value=340;
+    document.getElementById("fineComment").value="";
+}
+
+function renderPayments(){
+
+    let search=(document.getElementById("paymentSearch")?.value || "").toLowerCase();
+
+    let list=fines.filter(f =>
+        f.id.toLowerCase().includes(search) ||
+        f.person.toLowerCase().includes(search) ||
+        f.car.toLowerCase().includes(search)
+    );
+
+    if(!list.length){
+        document.getElementById("paymentsTable").innerHTML=
+            '<div class="empty">Штрафів не знайдено</div>';
+        return;
+    }
+
+    let html=`
+    <table>
+    <tr>
+        <th>ID</th>
+        <th>Особа</th>
+        <th>Авто</th>
+        <th>Сума</th>
+        <th>Статус</th>
+        <th>Дія</th>
+    </tr>`;
+
+    list.forEach(f=>{
+        html+=`
+        <tr>
+            <td>${f.id}</td>
+            <td>${escapeHTML(f.person)}</td>
+            <td>${escapeHTML(f.car)}</td>
+            <td class="amount">${f.amount} ₴</td>
+            <td>
+                ${
+                    f.paid
+                    ? '<span class="badge paid">Сплачено</span>'
+                    : '<span class="badge unpaid">Не сплачено</span>'
+                }
+            </td>
+            <td>
+                ${
+                    !f.paid
+                    ? `<button class="success" onclick="payFine('${f.id}')">Сплатити</button>`
+                    : `<button class="gray" onclick="printFine('${f.id}')">Друк</button>`
+                }
+            </td>
+        </tr>`;
+    });
+
+    html+="</table>";
+
+    document.getElementById("paymentsTable").innerHTML=html;
+}
+
+function payFine(id){
+
+    let f=fines.find(x=>x.id===id);
+
+    if(!f)return;
+
+    if(confirm("Підтвердити оплату штрафу "+id+" на суму "+f.amount+" ₴?")){
+        f.paid=true;
+        f.paidAt=new Date().toLocaleString("uk-UA");
+
+        save();
+        updateAll();
+    }
+}
+
+function printFine(id){
+
+    let f=fines.find(x=>x.id===id);
+
+    if(!f)return;
+
+    let w=window.open("","_blank");
+
+    w.document.write(`
+    <html>
+    <head>
+    <title>Штраф ${f.id}</title>
+    <style>
+    body{font-family:Arial;padding:40px}
+    h1{text-align:center}
+    .box{border:1px solid #000;padding:20px}
+    </style>
+    </head>
+    <body>
+    <h1>КВИТАНЦІЯ</h1>
+    <div class="box">
+    <p><b>ID:</b> ${f.id}</p>
+    <p><b>ПІБ:</b> ${escapeHTML(f.person)}</p>
+    <p><b>Авто:</b> ${escapeHTML(f.car)}</p>
+    <p><b>Стаття:</b> ${f.article} — ${escapeHTML(f.articleTitle)}</p>
+    <p><b>Сума:</b> ${f.amount} ₴</p>
+    <p><b>Статус:</b> ${f.paid ? "СПЛАЧЕНО" : "НЕ СПЛАЧЕНО"}</p>
+    </div>
+    <script>window.print()<\/script>
+    </body>
+    </html>
+    `);
+
+    w.document.close();
+}
+
+function createProtocol(){
+
+    let number=document.getElementById("protocolNumber").value.trim();
+    let person=document.getElementById("protocolPerson").value.trim();
+    let car=document.getElementById("protocolCar").value.trim();
+    let article=document.getElementById("protocolArticle").value.trim();
+    let description=document.getElementById("protocolDescription").value.trim();
+
+    if(!number || !person){
+        alert("Вкажіть номер протоколу та ПІБ.");
+        return;
+    }
+
+    protocols.unshift({
+        number,
+        person,
+        car,
+        article,
+        description,
+        date:new Date().toLocaleString("uk-UA")
+    });
+
+    save();
+
+    document.getElementById("protocolNumber").value="";
+    document.getElementById("protocolPerson").value="";
+    document.getElementById("protocolCar").value="";
+    document.getElementById("protocolArticle").value="";
+    document.getElementById("protocolDescription").value="";
+
+    renderProtocols();
+}
+
+function renderProtocols(){
+
+    let box=document.getElementById("protocolsList");
+
+    if(!protocols.length){
+        box.innerHTML='<div class="empty">Протоколів ще немає</div>';
+        return;
+    }
+
+    box.innerHTML=protocols.map(p=>`
+        <div class="article">
+            <h3>${escapeHTML(p.number)}</h3>
+            <p><b>ПІБ:</b> ${escapeHTML(p.person)}</p>
+            <p><b>Авто:</b> ${escapeHTML(p.car)}</p>
+            <p><b>Стаття:</b> ${escapeHTML(p.article)}</p>
+            <p>${escapeHTML(p.description)}</p>
+            <small>${p.date}</small>
+        </div>
+    `).join("");
+}
+
+function renderArticles(){
+
+    let search=(document.getElementById("articleSearch")?.value || "").toLowerCase();
+
+    let list=articles.filter(a=>
+        ("стаття "+a.id).includes(search) ||
+        a.title.toLowerCase().includes(search) ||
+        a.description.toLowerCase().includes(search)
+    );
+
+    document.getElementById("articles").innerHTML=list.map(a=>`
+        <div class="article">
+            <h3>Стаття ${a.id}. ${escapeHTML(a.title)}</h3>
+            <p>${escapeHTML(a.description)}</p>
+            <div class="amount">${a.amount} ₴</div>
+        </div>
+    `).join("");
+}
+
+function addCar(){
+
+    let number=document.getElementById("carNumber").value.trim();
+    let model=document.getElementById("carModel").value.trim();
+    let color=document.getElementById("carColor").value.trim();
+    let owner=document.getElementById("carOwner").value.trim();
+
+    if(!number || !model){
+        alert("Вкажіть номер та марку автомобіля.");
+        return;
+    }
+
+    cars.unshift({
+        id:Date.now(),
+        number,
+        model,
+        color,
+        owner
+    });
+
+    save();
+
+    document.getElementById("carNumber").value="";
+    document.getElementById("carModel").value="";
+    document.getElementById("carColor").value="";
+    document.getElementById("carOwner").value="";
+
+    renderCars();
+}
+
+function renderCars(){
+
+    let box=document.getElementById("carsList");
+
+    if(!cars.length){
+        box.innerHTML='<div class="empty">Транспорт не додано</div>';
+        return;
+    }
+
+    box.innerHTML=`
+    <table>
+    <tr>
+        <th>Номер</th>
+        <th>Марка / модель</th>
+        <th>Колір</th>
+        <th>Власник</th>
+    </tr>
+    ${
+        cars.map(c=>`
+        <tr>
+            <td><b>${escapeHTML(c.number)}</b></td>
+            <td>${escapeHTML(c.model)}</td>
+            <td>${escapeHTML(c.color)}</td>
+            <td>${escapeHTML(c.owner)}</td>
+        </tr>
+        `).join("")
+    }
+    </table>`;
+}
+
+function updateStats(){
+
+    let total=fines.length;
+    let paid=fines.filter(f=>f.paid).length;
+    let unpaid=total-paid;
+    let money=fines.reduce((sum,f)=>sum+Number(f.amount),0);
+
+    document.getElementById("totalFines").textContent=total;
+    document.getElementById("paidFines").textContent=paid;
+    document.getElementById("unpaidFines").textContent=unpaid;
+    document.getElementById("totalMoney").textContent=money+" ₴";
+
+    document.getElementById("statFines").textContent=total;
+    document.getElementById("statPaid").textContent=paid;
+    document.getElementById("statUnpaid").textContent=unpaid;
+    document.getElementById("statMoney").textContent=money+" ₴";
+}
+
+function renderRecent(){
+
+    let box=document.getElementById("recentHome");
+
+    if(!fines.length){
+        box.innerHTML='<div class="empty">Штрафів ще немає</div>';
+        return;
+    }
+
+    box.innerHTML=`
+    <table>
+    <tr>
+        <th>ID</th>
+        <th>Особа</th>
+        <th>Авто</th>
+        <th>Сума</th>
+        <th>Статус</th>
+    </tr>
+    ${
+        fines.slice(0,5).map(f=>`
+        <tr>
+            <td>${f.id}</td>
+            <td>${escapeHTML(f.person)}</td>
+            <td>${escapeHTML(f.car)}</td>
+            <td>${f.amount} ₴</td>
+            <td>
+                ${f.paid
+                ? '<span class="badge paid">Сплачено</span>'
+                : '<span class="badge unpaid">Не сплачено</span>'}
+            </td>
+        </tr>
+        `).join("")
+    }
+    </table>`;
+}
+
+function clearAll(){
+
+    if(confirm("Точно очистити всю локальну базу?")){
+        fines=[];
+        protocols=[];
+        cars=[];
+        save();
+        updateAll();
+    }
+}
+
+function escapeHTML(text){
+    return String(text ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+}
+
+function updateAll(){
+    updateStats();
+    renderRecent();
+    renderPayments();
+    renderProtocols();
+    renderArticles();
+    renderCars();
+}
+
+function updateClock(){
+    let now=new Date();
+
+    document.getElementById("clock").textContent=
+        now.toLocaleDateString("uk-UA")+" • "+
+        now.toLocaleTimeString("uk-UA");
+}
+
+document.getElementById("fineDate").value=
+    new Date().toISOString().slice(0,10);
+
+document.getElementById("fineTime").value=
+    new Date().toTimeString().slice(0,5);
+
+updateAll();
+updateClock();
+setInterval(updateClock,1000);
+
+</script>
+
+</body>
+</html>
